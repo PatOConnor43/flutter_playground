@@ -124,17 +124,8 @@ class _MaterialLinearProgressIndicatorPainter extends CustomPainter {
     if (value != null) {
       final double width = value.clamp(0.0, 1.0) * size.width;
 
-      double left;
-      switch (textDirection) {
-        case TextDirection.rtl:
-          left = size.width - width;
-          break;
-        case TextDirection.ltr:
-          left = 0.0;
-          break;
-      }
-
-      canvas.drawRect(new Offset(left, 0.0) & new Size(width, size.height), paint);
+      canvas.drawRect(new Offset(size.width/2, 0.0) & new Size(-width/2, size.height), paint);
+      canvas.drawRect(new Offset(size.width/2, 0.0) & new Size(width/2, size.height), paint);
     } else {
       final double startX = size.width * (1.5 * animationValue - 0.5);
       final double endX = startX + 0.5 * size.width;
