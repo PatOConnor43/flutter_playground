@@ -1,111 +1,123 @@
+// Copyright 2015 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
 import 'package:flutter/material.dart';
+import 'package:flutter_playground/material_linear_progress_indicator.dart';
 
-void main() {
-  runApp(new MyApp());
+class ProgressIndicatorDemo extends StatefulWidget {
+  static const String routeName = '/material/progress-indicator';
+
+  @override
+  _ProgressIndicatorDemoState createState() =>
+      new _ProgressIndicatorDemoState();
 }
 
-class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
+class _ProgressIndicatorDemoState extends State<ProgressIndicatorDemo>
+    with SingleTickerProviderStateMixin {
+  AnimationController _controller;
+  Animation<double> _animation;
+
   @override
-  Widget build(BuildContext context) {
-    return new MaterialApp(
-      title: 'Flutter Demo',
-      theme: new ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or press Run > Flutter Hot Reload in IntelliJ). Notice that the
-        // counter didn't reset back to zero; the application is not restarted.
-        primarySwatch: Colors.blue,
-      ),
-      home: new MyHomePage(title: 'Flutter Demo Home Page'),
-    );
+  void initState() {
+    super.initState();
+    _controller = new AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    )..forward();
+
+    _animation = new CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.9, curve: Curves.fastOutSlowIn),
+        reverseCurve: Curves.fastOutSlowIn)
+      ..addStatusListener((AnimationStatus status) {
+        if (status == AnimationStatus.dismissed)
+          _controller.forward();
+        else if (status == AnimationStatus.completed) _controller.reverse();
+      });
   }
-}
-
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
 
   @override
-  _MyHomePageState createState() => new _MyHomePageState();
-}
+  void dispose() {
+    _controller.stop();
+    super.dispose();
+  }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
+  void _handleTap() {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      // valueAnimation.isAnimating is part of our build state
+      if (_controller.isAnimating) {
+        _controller.stop();
+      } else {
+        switch (_controller.status) {
+          case AnimationStatus.dismissed:
+          case AnimationStatus.forward:
+            _controller.forward();
+            break;
+          case AnimationStatus.reverse:
+          case AnimationStatus.completed:
+            _controller.reverse();
+            break;
+        }
+      }
     });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return new Scaffold(
-      appBar: new AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: new Text(widget.title),
+  Widget _buildIndicators(BuildContext context, Widget child) {
+    final List<Widget> indicators = <Widget>[
+      const SizedBox(width: 200.0, child: const MaterialLinearProgressIndicator()),
+      const LinearProgressIndicator(),
+      const LinearProgressIndicator(),
+      new LinearProgressIndicator(value: _animation.value),
+      new Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: <Widget>[
+          const CircularProgressIndicator(),
+          new SizedBox(
+              width: 20.0,
+              height: 20.0,
+              child: new CircularProgressIndicator(value: _animation.value)),
+          new SizedBox(
+            width: 100.0,
+            height: 20.0,
+            child: new Text('${(_animation.value * 100.0).toStringAsFixed(1)}%',
+                textAlign: TextAlign.right),
+          ),
+        ],
       ),
-      body: new Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: new Column(
-          // Column is also layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug paint" (press "p" in the console where you ran
-          // "flutter run", or select "Toggle Debug Paint" from the Flutter tool
-          // window in IntelliJ) to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            new Text(
-              'You have pushed the button this many times:',
-            ),
-            new Text(
-              '${_counter}',
-              style: Theme.of(context).textTheme.display1,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: new FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: new Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+    ];
+    return new Column(
+      children: indicators
+          .map((Widget c) => new Container(
+          child: c,
+          margin:
+          const EdgeInsets.symmetric(vertical: 15.0, horizontal: 20.0)))
+          .toList(),
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return new MaterialApp(
+      home: new Scaffold(
+          appBar: new AppBar(title: const Text('Progress indicators')),
+          body: new Center(
+              child: new SingleChildScrollView(
+                  child: new DefaultTextStyle(
+                      style: Theme.of(context).textTheme.title,
+                      child: new GestureDetector(
+                          onTap: _handleTap,
+                          behavior: HitTestBehavior.opaque,
+                          child: new Container(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 12.0, horizontal: 8.0),
+                              child: new AnimatedBuilder(
+                                  animation: _animation,
+                                  builder: _buildIndicators))))))),
+    );
+  }
+}
+
+main() {
+  runApp(new ProgressIndicatorDemo());
 }
