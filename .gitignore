@@ -12,5 +12,4 @@ pubspec.lock
 doc/api/
 
 *.iml
-/.idea/workspace.xml
-/.idea/libraries
+.idea/
